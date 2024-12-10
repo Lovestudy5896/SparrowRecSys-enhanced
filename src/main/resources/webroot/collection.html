@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html class="no-js" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <!-- 设置文档的字符集为UTF-8 -->
+    <!-- 引入搜索框 -->
+    <include src="search-bar.html"></include>
+
+    <!--<base href="/">-->
+    <base href="."/> <!-- 设置基本路径，使得页面内的相对链接都是基于当前文件夹 -->
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <!-- 设置兼容模式，确保页面在IE浏览器中以最新的标准渲染 -->
+
+    <title>Category | Sparrow RecSys</title>
+    <!-- 页面标题，显示在浏览器标签上 -->
+
+    <meta name="description" content=""/>
+    <!-- 页面描述，通常用于SEO，但这里没有填充内容 -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <!-- 设置视口大小，确保页面在移动设备上正确显示，适应屏幕宽度 -->
+
+    <meta name="theme-color" content="#ffffff"/>
+    <!-- 设置浏览器地址栏颜色，支持Chrome等浏览器 -->
+
+    <link type="text/plain" rel="author"/>
+    <!-- 这个标签用于指定页面的作者，一般用于指示开发者信息 -->
+
+    <link href="./css/style.css" rel="stylesheet"/>
+    <!-- 引入外部CSS文件，`style.css` 用于页面的样式 -->
+
+    <link rel="shortcut icon" href="./resources/favicon.ico">
+    <!-- 设置浏览器标签页的小图标 -->
+
+    <script src="./js/jquery-3.2.1.min.js"></script>
+    <!-- 引入jQuery库 -->
+
+    <script src="./js/recsys.js"></script>
+    <!-- 引入自定义的JavaScript文件，用于实现推荐系统的逻辑 -->
+
+    <style>
+        /* 在此处定义页面的内联CSS样式 */
+        .movie-row .movie-row-bounds .movie-row-item{
+            display: block;
+        }
+
+        .movie-card-md1{
+            margin:0 5px 15px 0
+        }
+    </style>
+</head>
+<body id="root">
+<!-- 页面主体部分 -->
+<div>
+    <!-- 头部区域 -->
+    <header class="base-compact-header">
+        <div class="ml4-container base-header-primary-container">
+            <div class="base-header-logo-container">
+                <!-- 网站Logo区域 -->
+                <span class="base-header-logo-main">
+                    <a href="."><img alt="Sparrow RecSys Logo" height="30px" src="./images/sparrowrecsyslogo.png"/></a>
+                    <!-- 点击Logo返回首页 -->
+                </span>
+            </div>
+            <div id="search-bar-placeholder"></div>
+            <script>
+                // 动态加载 search-bar.html
+                fetch('search-bar.html')
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('search-bar-placeholder').innerHTML = html;
+                    })
+                    .catch(err => console.error('Error loading search bar:', err));
+            </script>
+        </div>
+    </header>
+    <!-- 头部区域结束 -->
+
+    <div class="base-compact-header-spacer"></div>
+    <!-- 用于给头部添加空间，使得下面的内容不会被遮挡 -->
+
+    <div class="ml4-container" style="min-height: 920px;">
+        <!-- 主内容区域 -->
+        <div id="main-container">
+            <div class="frontpage" id="recPage">
+                <!-- 推荐页面内容 -->
+                <div class="frontpage-section-top">
+                    <div class="row">
+                        <div class="col-md-6"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+<script type="text/javascript">
+    // 用于从URL中获取指定的查询字符串参数
+    function getQueryString(name, windowLocation) {
+        var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i');
+        var r = windowLocation.search.substr(1).match(reg);
+        if (r != null) {
+            return unescape(r[2]);
+        }
+        return null;
+    };
+
+    // 获取URL中的查询参数
+    var windowLocation = window.location;
+    var type = getQueryString("type",windowLocation);
+    var value = getQueryString("value",windowLocation);
+
+    // 基础URL
+    var baseUrl = windowLocation.protocol + "//" + windowLocation.host + "/"
+
+    // 按类型加载推荐内容
+    if (type == "genre" && value) {
+        addGenreRow('#recPage', value, value.toLowerCase() + '-collection', 300, baseUrl);
+    } else if (type == "year" && value) {
+        console.log("Calling addYearRow with parameters:",value + '-collection', 300, baseUrl);
+        addYearRow('#recPage', value, value + '-collection', 300, baseUrl);
+    } else {
+        document.getElementById('page-title').textContent = "电影推荐";
+        document.getElementById('movies-list').innerHTML = '<p>无效的请求类型，请检查URL参数。</p>';
+    }
+</script>
+</html>

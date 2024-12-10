@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html class="no-js" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <!-- 设置网页字符编码为UTF-8，确保页面支持国际字符 -->
+
+    <!-- 引入搜索框 -->
+    <include src="search-bar.html"></include>
+
+    <!--<base href="/">-->
+    <base href="."/>
+    <!-- 设置基础URL，所有相对路径的链接将以当前文件夹为根目录 -->
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <!-- 强制使用最新的渲染模式，确保在IE浏览器中正常显示 -->
+
+    <title>Home | Sparrow RecSys</title>
+    <!-- 设置网页的标题，显示在浏览器标签栏上 -->
+
+    <meta name="description" content=""/>
+    <!-- 网页描述，通常用于SEO（搜索引擎优化），但这里没有提供内容 -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <!-- 设置视口（viewport）参数，确保页面在移动设备上自适应屏幕宽度 -->
+
+    <meta name="theme-color" content="#ffffff"/>
+    <!-- 设置浏览器地址栏的主题颜色为白色 -->
+
+    <link type="text/plain" rel="author"/>
+    <!-- 设置网页作者信息，这里为空 -->
+
+    <link href="./css/style.css" rel="stylesheet"/>
+    <!-- 引入外部CSS样式文件，用于页面的布局和样式设计 -->
+
+    <link rel="shortcut icon" href="./resources/favicon.ico">
+    <!-- 设置网页标签的图标 -->
+
+    <script src="./js/jquery-3.2.1.min.js"></script>
+    <!-- 引入jQuery库，用于简化JavaScript编程 -->
+
+    <script src="./js/recsys.js?v=1.19"></script>
+    <!-- 引入自定义JavaScript文件，v=1.19表示版本号，用于版本控制 -->
+</head>
+<body id="root">
+<!-- 网页主体部分 -->
+<div>
+    <header class="base-compact-header">
+        <!-- 页头部分 -->
+        <div class="ml4-container base-header-primary-container">
+            <!-- 页头容器 -->
+            <div class="base-header-logo-container">
+                <!-- 网站Logo容器 -->
+                <span class="base-header-logo-main">
+                    <a href="."><img alt="Sparrow RecSys Logo" height="30px" src="./images/sparrowrecsyslogo.png"/></a>
+                    <!-- 网站Logo，点击Logo返回首页 -->
+                </span>
+            </div>
+
+            <!-- 通用的搜索框，用户可以在这里再次修改搜索内容 -->
+            <header>
+                <form class="form-inline" novalidate="" role="form" id="search-form" onsubmit="return handleSearch(event);">
+                    <div class="input-group input-group-sm base-header-search-box">
+                        <input class="form-control input-sm" id="omnisearch-typeahead" name="currentVal" type="text" spellcheck="false" placeholder="Search for movies..." required />
+                        <span class="input-group-btn">
+                            <button type="submit" class="btn btn-default btn-sm">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </span>
+                    </div>
+                </form>
+            </header>
+    <!-- 页头部分结束 -->
+
+    <div class="base-compact-header-spacer"></div>
+    <!-- 头部下方的空白空间，用于给页面内容提供间隔 -->
+        </div>
+    </header>
+
+            <div id="search-page">
+                <h2>Search Results</h2>
+                <div id="search-query"></div>  <!-- 显示当前搜索的关键词 -->
+                <div id="search-results" class="movie-row"></div>  <!-- 显示搜索结果 -->
+            </div>
+            <script>
+                // 当页面加载时，自动执行搜索
+                window.onload = function() {
+                    const query = new URLSearchParams(window.location.search).get('query');
+                    console.log("Query parameter: ", query); // 打印查询参数
+                    if (query) {
+                        fetch(`/search?query=${encodeURIComponent(query)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log("Search results: ", data); // 打印搜索结果
+                                displaySearchResults(data);
+                            })
+                            .catch(error => {
+                                console.error("Error during search:", error);
+                            });
+                    }
+                };
+
+            </script>
+
+</div>
+
+</body>
+</html>

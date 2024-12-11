@@ -206,19 +206,19 @@ function addGenreRow(pageId, rowName, rowId, size, baseUrl) {
     const translatedRowName = genreTranslation[rowName] || rowName;
 
     // 添加电影行框架
-    addRowFrame(pageId,"genre", rowName, rowId, baseUrl);
+    addRowFrame(pageId, "genre", rowName, rowId, baseUrl);
 
     // 使用AJAX从API获取指定类型的推荐电影
     $.getJSON(baseUrl + "getrecommendation?genre=" + rowName + "&size=" + size + "&sortby=rating", function (result) {
         // 遍历推荐电影数据
         $.each(result, function (i, movie) {
-            appendMovie2Row(rowId, movie.title, movie.movieId, movie.releaseYear, movie.averageRating.toPrecision(2), movie.ratingNumber, movie.genres, baseUrl,"genres");
+            appendMovie2Row(rowId, movie.title, movie.movieId, movie.releaseYear, movie.averageRating.toPrecision(2), movie.ratingNumber, movie.genres, baseUrl, "genres");
         });
     });
     const curPage = window.location.pathname;
-    if(!curPage.includes("collection.html")){
+    if (!curPage.includes("collection.html")) {
         // 调用封装的函数添加导航链接
-        addNavbarLink("navbar-genres","genre", rowName, translatedRowName, baseUrl);
+        addNavbarLink("navbar-genres", "genre", rowName, translatedRowName, baseUrl);
     }
 
 }
@@ -226,7 +226,7 @@ function addGenreRow(pageId, rowName, rowId, size, baseUrl) {
 
 // 按年份加载电影
 function addYearRow(pageId, rowName, rowId, size, baseUrl) {
-    addRowFrame(pageId,"year", rowName, rowId, baseUrl);
+    addRowFrame(pageId, "year", rowName, rowId, baseUrl);
     console.log("add Year Row: ", rowName, rowId);
     // 从 API 获取按年份的推荐电影
     $.getJSON(baseUrl + "getrecommendation?year=" + rowName + "&size=" + size + "&sortby=rating")
@@ -276,7 +276,6 @@ function addUserHistory(pageId, containerId, userId, baseUrl) {
     var rowDiv = '<div class="frontpage-section-top"> \
                 <div class="explore-header frontpage-section-header">\
                  观影记录 \
-                 <button id="toggleHistory" class="btn btn-link" style="float: right; padding: 0 10px;">展示全部</button>\
                 </div>\
                 <div class="movie-row">\
                  <div class="movie-row-bounds">\
@@ -292,16 +291,14 @@ function addUserHistory(pageId, containerId, userId, baseUrl) {
 
     // 存储所有电影数据的数组
     let allMovies = [];
-    let isExpanded = false;
 
     // 从API获取用户历史记录数据
     $.getJSON(baseUrl + "getuser?id=" + userId, function (userObject) {
-        // 创建一个计数器来追踪已加载的电影数量
-        let loadedCount = 0;
-        const totalRatings = userObject.ratings.length;
+        // 获取用户的前32部评分记录
+        const limitedRatings = userObject.ratings.slice(0, 32);
 
         // 使用Promise.all来等待所有电影数据加载完成
-        Promise.all(userObject.ratings.map(rating => {
+        Promise.all(limitedRatings.map(rating => {
             return new Promise((resolve) => {
                 $.getJSON(baseUrl + "getmovie?id=" + rating.rating.movieId, function (movieObject) {
                     allMovies.push({
@@ -316,29 +313,18 @@ function addUserHistory(pageId, containerId, userId, baseUrl) {
                 });
             });
         })).then(() => {
-            // 所有数据加载完成后，先显示前32部电影
-            displayMovies(false);
-
-            // 添加折叠按钮点击事件
-            $('#toggleHistory').click(function () {
-                isExpanded = !isExpanded;
-                $(this).text(isExpanded ? '展示部分' : '展示全部');
-                displayMovies(isExpanded);
-            });
+            // 所有数据加载完成后显示电影
+            displayMovies();
         });
     });
 
     // 显示电影的函数
-    function displayMovies(showAll) {
+    function displayMovies() {
         // 清空容器
         $(`#${containerId}`).empty();
 
-        // 确定要显示的电影数量
-        const displayCount = showAll ? allMovies.length : Math.min(32, allMovies.length);
-
         // 显示电影
-        for (let i = 0; i < displayCount; i++) {
-            const movie = allMovies[i];
+        allMovies.forEach(movie => {
             appendMovie2Row(
                 containerId,
                 movie.title,
@@ -349,7 +335,7 @@ function addUserHistory(pageId, containerId, userId, baseUrl) {
                 movie.genres,
                 baseUrl
             );
-        }
+        });
     }
 }
 
@@ -404,35 +390,72 @@ function addMovieDetails(containerId, movieId, baseUrl) {
             }
         });
 
-        var movieDetails = '<div class="row movie-details-header movie-details-block">\
-                                <div class="col-md-2 header-backdrop">\
-                                    <img alt="movie backdrop image" height="250" src="./posters/' + movieObject.movieId + '.jpg">\
-                                </div>\
-                                <div class="col-md-9"><h1 class="movie-title"> ' + movieObject.title + ' </h1>\
-                                    <div class="row movie-highlights">\
-                                        <div class="col-md-2">\
-                                            <div class="heading-and-data">\
-                                                <div class="movie-details-heading">链接</div>\
-                                                <a target="_blank" href="http://www.imdb.com/title/tt' + movieObject.imdbId + '">imdb</a>,\
-                                                <span><a target="_blank" href="http://www.themoviedb.org/movie/' + movieObject.tmdbId + '">tmdb</a></span>\
+        // 检查海报是否存在
+        var posterPath = "./posters/" + movieObject.movieId + ".jpg";
+        $.ajax({
+            url: posterPath,
+            type: 'HEAD',
+            async: false,
+            success: function () {
+                var posterBlock = '<div class="col-md-2 header-backdrop">\
+                                       <img alt="movie backdrop image" height="250" src="' + posterPath + '">\
+                                   </div>';
+                var movieDetails = '<div class="row movie-details-header movie-details-block">\
+                                        ' + posterBlock + '\
+                                        <div class="col-md-9"><h1 class="movie-title"> ' + movieObject.title + ' </h1>\
+                                            <div class="row movie-highlights">\
+                                                <div class="col-md-2">\
+                                                    <div class="heading-and-data">\
+                                                        <div class="movie-details-heading">链接</div>\
+                                                        <a target="_blank" href="http://www.imdb.com/title/tt' + movieObject.imdbId + '">imdb</a>,\
+                                                        <span><a target="_blank" href="http://www.themoviedb.org/movie/' + movieObject.tmdbId + '">tmdb</a></span>\
+                                                    </div>\
+                                                </div>\
+                                                <div class="col-md-6">\
+                                                    <div class="heading-and-data">\
+                                                        <div class="movie-details-heading">类型</div>\
+                                                        ' + genres + '\
+                                                    </div>\
+                                                    <div class="heading-and-data">\
+                                                        <div class="movie-details-heading">谁最喜欢这部电影</div>\
+                                                        ' + ratingUsers + '\
+                                                    </div>\
+                                                </div>\
                                             </div>\
                                         </div>\
-                                        <div class="col-md-6">\
-                                            <div class="heading-and-data">\
-                                                <div class="movie-details-heading">类型</div>\
-                                                ' + genres + '\
-                                            </div>\
-                                            <div class="heading-and-data">\
-                                                <div class="movie-details-heading">谁最喜欢这部电影</div>\
-                                                ' + ratingUsers + '\
+                                    </div>';
+                $("#" + containerId).prepend(movieDetails);
+            },
+            error: function () {
+                var movieDetails = '<div class="row movie-details-header movie-details-block">\
+                                        <div class="col-md-9"><h1 class="movie-title"> ' + movieObject.title + ' </h1>\
+                                            <div class="row movie-highlights">\
+                                                <div class="col-md-2">\
+                                                    <div class="heading-and-data">\
+                                                        <div class="movie-details-heading">链接</div>\
+                                                        <a target="_blank" href="http://www.imdb.com/title/tt' + movieObject.imdbId + '">imdb</a>,\
+                                                        <span><a target="_blank" href="http://www.themoviedb.org/movie/' + movieObject.tmdbId + '">tmdb</a></span>\
+                                                    </div>\
+                                                </div>\
+                                                <div class="col-md-6">\
+                                                    <div class="heading-and-data">\
+                                                        <div class="movie-details-heading">类型</div>\
+                                                        ' + genres + '\
+                                                    </div>\
+                                                    <div class="heading-and-data">\
+                                                        <div class="movie-details-heading">谁最喜欢这部电影</div>\
+                                                        ' + ratingUsers + '\
+                                                    </div>\
+                                                </div>\
                                             </div>\
                                         </div>\
-                                    </div>\
-                                </div>\
-                            </div>';
-        $("#" + containerId).prepend(movieDetails);
+                                    </div>';
+                $("#" + containerId).prepend(movieDetails);
+            }
+        });
     });
 }
+
 
 
 // 添加用户详细信息到指定容器

@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,21 +27,45 @@ public class RecForYouProcess {
             throw new IllegalArgumentException("仅支持 KNN 模型进行推荐");
         }
 
-        String currentPath = RecForYouProcess.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         List<Integer> recommendedMovieIds = new ArrayList<>();
         try {
-            // 构造 Python 脚本路径
-            // TODO:将recommend.py的路径修改为本地路径
-            String scriptPath = new File(
-                    "D:\\FileRecv\\SparrowRecSys-enhanced\\src\\main\\java\\com\\sparrowrecsys\\online\\recprocess\\python_codes\\recommend.py").getAbsolutePath();
-            // System.out.println("[DEBUG] Python脚本路径: " + scriptPath);
+            // 构造 Python 脚本路径列表
+            // TODO:在列表项中添加本地路径
+            List<String> scriptPaths = Arrays.asList(
+                    "D:\\FileRecv\\SparrowRecSys-enhanced\\src\\main\\java\\com\\sparrowrecsys\\online\\recprocess\\python_codes\\recommend.py",
+                    "C:\\Users\\Windows\\Documents\\codes\\SparrowRecSys-enhanced\\src\\main\\java\\com\\sparrowrecsys\\online\\recprocess\\python_codes\\recommend.py");
+
+            String scriptPath = null;
+            for (String path : scriptPaths) {
+                if (new File(path).exists()) {
+                    scriptPath = new File(path).getAbsolutePath();
+                    break;
+                }
+            }
+
+            if (scriptPath == null) {
+                throw new IllegalStateException("未找到有效的 Python 脚本路径");
+            }
+
+            // 构造 Python 解释器路径列表
+            // TODO:在列表项中添加本地路径
+            List<String> pythonPaths = Arrays.asList("C:\\Users\\Lenovo\\miniconda3\\envs\\tf\\python.exe",
+                    "C:\\Users\\Windows\\miniconda3\\envs\\movies-recommender\\python.exe");
+
+            String pythonPath = null;
+            for (String path : pythonPaths) {
+                if (new File(path).exists()) {
+                    pythonPath = path;
+                    break;
+                }
+            }
+
+            if (pythonPath == null) {
+                throw new IllegalStateException("未找到有效的 Python 解释器路径");
+            }
 
             // 构造 Python 脚本调用命令
-            // TODO:这里python解释器路径需要更改为本地路径
-            String[] command = new String[] {
-                    "C:\\Users\\Lenovo\\miniconda3\\envs\\tf\\python.exe", scriptPath, String.valueOf(userId), String.valueOf(size)
-            };
-            // System.out.println("[DEBUG] 执行的命令: " + String.join(" ", command));
+            String[] command = new String[] { pythonPath, scriptPath, String.valueOf(userId), String.valueOf(size) };
 
             // 启动进程执行 Python 脚本
             Process process = Runtime.getRuntime().exec(command);
@@ -60,10 +85,6 @@ public class RecForYouProcess {
                 errorOutput.append(line).append("\n");
             }
 
-            // 等待进程完成
-            // int exitCode = process.waitFor();
-            // System.out.println("[DEBUG] Python脚本返回的退出代码: " + exitCode);
-            // System.out.println("[DEBUG] Python脚本返回的输出: " + jsonOutput.toString());
             if (errorOutput.length() > 0) {
                 System.out.println("[ERROR] Python脚本返回的错误信息: " + errorOutput.toString());
             }
